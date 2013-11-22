@@ -215,6 +215,20 @@ function tests_with_3dgeometry (db) {
         }).then(success,failure);
         });
 }
+function tests_with_4dgeometry (db) {
+    return promise(function(success,failure){
+      db.spatial('spatial/with4DGeometry', {start_range: [-20,-20,-20,-20], end_range: [20, 25, 80.7,100]}).then(function(res) {
+        extract_ids(res).should.deep.equal([ '0', '9', '10', '1', '2', '3', '4', '5', '6', '7', '8' ].sort(),
+          'should return a subset of the geometries');
+      }).then(function(){
+        return db.spatial('spatial/with4DGeometry', {start_range: [0, 0, 19,25], end_range: [20, 25, 20,36]}).then(function(res){
+          extract_ids(res).should.deep.equal(['5','6'],
+            "should return a subset of the geometries");
+            });
+        }).then(success,failure);
+        });
+}
+
 function tests_without_geometry(db) {
   return promise(function(success,failure){
     db.spatial('spatial/noGeometry', {start_range: [3, 0, -10, 2], end_range: [10, 21, -9, 20]}, function(_, res) {
@@ -272,6 +286,12 @@ it("range tests 1", function(done) {
           coordinates: [doc.integer, doc.integer+5, doc.integer+14]
         }, doc.string);
       }.toString(),
+      with4DGeometry: function(doc) {
+        emit({
+          type: "Point",
+          coordinates: [doc.integer, doc.integer+5, doc.integer+14,doc.integer*doc.integer]
+        }, doc.string);
+      }.toString(),
       noGeometry: function(doc) {
         emit([[doc.integer, doc.integer+1], doc.integer*3,
           [doc.integer-14, doc.integer+100], doc.integer],
@@ -313,13 +333,15 @@ it("range tests 1", function(done) {
 it('range tests 2',function(done){
   tests_without_geometry(db).then(done,done);
 
-});it('range tests 3',function(done){
-  console.log('test 3');
-  tests_with_3dgeometry(db).then(function(){
-    console.log('3 done');
+});
+it('range tests 3',function(done){
+  tests_with_3dgeometry(db).then(done,done);
+});
+  it('range tests 4',function(done){
+  tests_with_4dgeometry(db).then(function(){
     return destroy('TESTDB3');
   }).then(done,done);
-
 });
+
 });
 });
