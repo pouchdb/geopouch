@@ -152,9 +152,9 @@ it("Basic tests from GeoCouch test suite", function(done) {
       return {_id: (i).toString(), geom: x};
     });
     docs.push(designDoc);
-
-    db.bulkDocs({docs: docs}, {}, function() {
-      db.spatial('geojson/test', function(_, res) {
+    var bulkDocs = denodify(db.bulkDocs);
+    bulkDocs({docs: docs}, {}).then(function() {
+      db.spatial('geojson/test').then(function(res) {
         res.rows.should.have.length(GEOJSON_GEOMS.length,
           "The same number of returned geometries is correct");
 
@@ -166,41 +166,45 @@ it("Basic tests from GeoCouch test suite", function(done) {
           });
           found.should.have.length(1, "Geometry was found in the values");
         });
-        destroy('TESTDB2').then(done,done);
-      });
+      }).then(function(){
+        return destroy('TESTDB2');
+      }).then(done,done);
     });
   });
 });
 describe("Range tests from GeoCouch test suite", function(){
   function tests_with_geometry (db) {
     return promise(function(success,failure){
-      db.spatial('spatial/withGeometry', {start_range: [-20, 0, 6.4], end_range: [16, 25, 8.7]}, function(_, res) {
+      db.spatial('spatial/withGeometry', {start_range: [-20, 0, 6.4], end_range: [16, 25, 8.7]}).then(function(res) {
         extract_ids(res).should.deep.equal(['2','3','4','5'],
           'should return a subset of the geometries');
-        db.spatial('spatial/withGeometry', {start_range: [-17, 0, 8.8], end_range: [16, 25, 8.8]}, function(_, res) {
+      }).then(function(){
+        return db.spatial('spatial/withGeometry', {start_range: [-17, 0, 8.8], end_range: [16, 25, 8.8]}).then(function(res) {
           extract_ids(res).should.deep.equal(['4','5'],
             "should return a subset of the geometries " +
             "(3rd dimension is single point)");
-          db.spatial('spatial/withGeometry', {start_range: [-17, 0, null], end_range: [16, 25, null]}, function(_, res) {
+        });
+      }).then(function(){
+        return db.spatial('spatial/withGeometry', {start_range: [-17, 0, null], end_range: [16, 25, null]}).then(function(res) {
             extract_ids(res).should.deep.equal(['10','2','3','4','5'],
               "should return a subset of the geometries " +
               "(3rd dimension is a wildcard)");
-            db.spatial('spatial/withGeometry', {start_range: [-17, 0, null], end_range: [16, 25, 8.8]}, function(_, res) {
-              extract_ids(res).should.deep.equal(['2','3','4','5'],
+          });
+        }).then(function(){    
+          return db.spatial('spatial/withGeometry', {start_range: [-17, 0, null], end_range: [16, 25, 8.8]}).then(function(res) {
+            extract_ids(res).should.deep.equal(['2','3','4','5'],
                 "should return a subset of the geometries " +
                 "(3rd dimension is open at the start)");
-              db.spatial('spatial/withGeometry', {start_range: [-17, 0, 8.8], end_range: [16, 25, null]}, function(_, res) {
-                extract_ids(res).should.deep.equal(['10','4','5'],
-                  "should return a subset of the geometries " +
-                  "(3rd dimension is open at the end)");
-                success();
-              });
-            });
           });
-        });
-});
-});
-};
+        }).then(function(){
+          return db.spatial('spatial/withGeometry', {start_range: [-17, 0, 8.8], end_range: [16, 25, null]}).then(function(res) {
+            extract_ids(res).should.deep.equal(['10','4','5'],
+                "should return a subset of the geometries " +
+                "(3rd dimension is open at the end)");
+          })
+        }).then(success,failure);
+    });
+  };
 function tests_with_3dgeometry (db) {
     return promise(function(success,failure){
       db.spatial('spatial/with3DGeometry', {start_range: [-20,-20,-20], end_range: [20, 25, 80.7]}).then(function(res) {
@@ -231,32 +235,35 @@ function tests_with_4dgeometry (db) {
 
 function tests_without_geometry(db) {
   return promise(function(success,failure){
-    db.spatial('spatial/noGeometry', {start_range: [3, 0, -10, 2], end_range: [10, 21, -9, 20]}, function(_, res) {
+    db.spatial('spatial/noGeometry', {start_range: [3, 0, -10, 2], end_range: [10, 21, -9, 20]}).then(function(res) {
       extract_ids(res).should.deep.equal( ['2','3','4','5'],
         "should return a subset of the geometries");
-      db.spatial('spatial/noGeometry', {start_range: [3, 0, -7, 5], end_range: [10, 21, -7, 20]}, function(_, res) {
+    }).then(function(){
+      return db.spatial('spatial/noGeometry', {start_range: [3, 0, -7, 5], end_range: [10, 21, -7, 20]}).then(function(res) {
         extract_ids(res).should.deep.equal(['5','6','7'],
           "should return a subset of the geometries" +
           "(3rd dimension is a point)");
-        db.spatial('spatial/noGeometry', {start_range: [3, null, -2, 4], end_range: [10, null, -2, 20]}, function(_, res) {
-          extract_ids(res).should.deep.equal(['10','4','5','6','7','8','9'],
-            "should return a subset of the geometries" +
-            "(2nd dimension is a wildcard)");
-          db.spatial('spatial/noGeometry', {start_range: [3, null, -2, 4], end_range: [10, 15, -2, 20]}, function(_, res) {
+      });
+    }).then(function(){
+      return db.spatial('spatial/noGeometry', {start_range: [3, null, -2, 4], end_range: [10, null, -2, 20]}).then(function(res) {
+        extract_ids(res).should.deep.equal(['10','4','5','6','7','8','9'],
+          "should return a subset of the geometries" +
+          "(2nd dimension is a wildcard)");
+        });
+    }).then(function(){
+      return db.spatial('spatial/noGeometry', {start_range: [3, null, -2, 4], end_range: [10, 15, -2, 20]}).then(function(res) {
             extract_ids(res).should.deep.equal(['4','5'],
               "should return a subset of the geometries" +
               "(2nd dimension is open at the start)");
-            db.spatial('spatial/noGeometry', {start_range: [3, 20, -2, 4], end_range: [10, null, -2, 20]}, function(_, res) {
+            });
+    }).then(function(){
+      return db.spatial('spatial/noGeometry', {start_range: [3, 20, -2, 4], end_range: [10, null, -2, 20]}).then(function(res) {
               extract_ids(res).should.deep.equal(['10','7','8','9'],
                 "should return a subset of the geometries" +
                 "(2nd dimension is open at the end)");
-              success();
             });
-          });
+          }).then(success,failure);
         });
-      });
-});
-});
 };
 function extract_ids(response) {
   if (response.length === 0) {
