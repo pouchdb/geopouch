@@ -1,5 +1,5 @@
 var promise = require('lie');
-var denodify('lie-denodify');
+var denodify = require('lie-denodify');
 // If we wanted to store incremental views we can do it here by listening
 // to the changes feed (keeping track of our last update_seq between page loads)
 // and storing the result of the map function (possibly using the upcoming

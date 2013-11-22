@@ -7,6 +7,9 @@
     "type": "git",
     "url": "git://github.com/calvinmetcalf/geopouch.git"
   },
+  "scripts":{
+    "test":"mocha test -R nyan"
+    },
   "keywords": [
     "geospatial",
     "pouchdb",
@@ -17,5 +20,14 @@
   "license": "Apache",
   "bugs": {
     "url": "https://github.com/calvinmetcalf/geopouch/issues"
+  },
+  "dependencies": {
+    "lie-denodify": "~0.1.1",
+    "lie": "~2.3.0"
+  },
+  "devDependencies": {
+    "chai": "~1.8.1",
+    "mocha": "~1.14.0",
+    "pouchdb": "0.0.14"
   }
 }
