@@ -175,6 +175,7 @@ function Spatial(db) {
       opts = {};
     }
     callback = callback || function(){};
+    opts = opts||{}
     if (typeof fun !== 'string') {
       return callback ? callback({
         status: 400,
