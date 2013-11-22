@@ -7,9 +7,9 @@
     "type": "git",
     "url": "git://github.com/calvinmetcalf/geopouch.git"
   },
-  "scripts":{
-    "test":"mocha test -R nyan"
-    },
+ "scripts": {
+    "test": "./node_modules/istanbul/lib/cli.js test ./node_modules/mocha/bin/_mocha test/test.js"
+  },
   "keywords": [
     "geospatial",
     "pouchdb",
@@ -28,6 +28,7 @@
   "devDependencies": {
     "chai": "~1.8.1",
     "mocha": "~1.14.0",
-    "pouchdb": "0.0.14"
+    "pouchdb": "0.0.14",
+    "istanbul": "~0.1.45"
   }
 }
