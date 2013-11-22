@@ -1,13 +1,13 @@
 {
   "name": "geopouch",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Put some geo in your pouch",
   "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/calvinmetcalf/geopouch.git"
   },
- "scripts": {
+  "scripts": {
     "test": "./node_modules/istanbul/lib/cli.js test ./node_modules/mocha/bin/_mocha test/test.js"
   },
   "keywords": [
