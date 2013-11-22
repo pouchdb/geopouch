@@ -42,7 +42,6 @@ function normalizeKey(key) {
 function within(key, start_range, end_range) {
   var start;
   var end;
-
   for(var i=0; i<key.length; i++) {
     start = key[i][0];
     end = key[i][1];

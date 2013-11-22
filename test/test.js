@@ -201,7 +201,20 @@ describe("Range tests from GeoCouch test suite", function(){
 });
 });
 };
-
+function tests_with_3dgeometry (db) {
+    return promise(function(success,failure){
+      db.spatial('spatial/with3DGeometry', {start_range: [-20,-20,-20], end_range: [20, 25, 80.7]}).then(function(res) {
+        extract_ids(res).should.deep.equal([ '0', '9', '10', '1', '2', '3', '4', '5', '6', '7', '8' ].sort(),
+          'should return a subset of the geometries');
+      }).then(function(){
+        return db.spatial('spatial/with3DGeometry', {start_range: [0, 0, 19], end_range: [20, 25, 20]}).then(function(res){
+          extract_ids(res).should.deep.equal(['5','6'],
+            "should return a subset of the geometries " +
+            "(3rd dimension is single point)");
+            });
+        }).then(success,failure);
+        });
+}
 function tests_without_geometry(db) {
   return promise(function(success,failure){
     db.spatial('spatial/noGeometry', {start_range: [3, 0, -10, 2], end_range: [10, 21, -9, 20]}, function(_, res) {
@@ -238,7 +251,8 @@ function extract_ids(response) {
   var result = response.rows.map(function(row) {
     return row.id;
   });
-  return result.sort();
+  result.sort();
+  return result;
 }
 var db;
 it("range tests 1", function(done) {
@@ -251,6 +265,12 @@ it("range tests 1", function(done) {
           type: "Point",
           coordinates: doc.loc
         }, [doc.integer, doc.integer+5]], doc.string);
+      }.toString(),
+      with3DGeometry: function(doc) {
+        emit({
+          type: "Point",
+          coordinates: [doc.integer, doc.integer+5, doc.integer+14]
+        }, doc.string);
       }.toString(),
       noGeometry: function(doc) {
         emit([[doc.integer, doc.integer+1], doc.integer*3,
@@ -273,7 +293,7 @@ it("range tests 1", function(done) {
     return docs;
   }
 
-  
+
 
   var docs = makeSpatialDocs(0, 10);
   docs.push(designDoc);
@@ -282,7 +302,7 @@ it("range tests 1", function(done) {
   function make(){
     return create('TESTDB3');
   };
-  
+
   destroy('TESTDB3').then(make,make).then(function(d){
     db = d;
     db.bulkDocs({docs: docs}, {}, function() {
@@ -291,10 +311,15 @@ it("range tests 1", function(done) {
   });
 });
 it('range tests 2',function(done){
-  tests_without_geometry(db).then(function(){
+  tests_without_geometry(db).then(done,done);
+
+});it('range tests 3',function(done){
+  console.log('test 3');
+  tests_with_3dgeometry(db).then(function(){
+    console.log('3 done');
     return destroy('TESTDB3');
   }).then(done,done);
-  
+
 });
 });
 });
