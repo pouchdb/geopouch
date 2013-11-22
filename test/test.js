@@ -175,11 +175,11 @@ it("Basic tests from GeoCouch test suite", function(done) {
 describe("Range tests from GeoCouch test suite", function(){
   function tests_with_geometry (db) {
     return promise(function(success,failure){
-      db.spatial('spatial/withGeometry', {start_range: [-20, 0, 6.4], end_range: [16, 25, 8.7]}).then(function(res) {
+      db.spatial('spatial/withGeometry', {include_docs:true,start_range: [-20, 0, 6.4], end_range: [16, 25, 8.7]}).then(function(res) {
         extract_ids(res).should.deep.equal(['2','3','4','5'],
           'should return a subset of the geometries');
       }).then(function(){
-        return db.spatial('spatial/withGeometry', {start_range: [-17, 0, 8.8], end_range: [16, 25, 8.8]}).then(function(res) {
+        return db.spatial('spatial/withGeometry', {conflicts:true,start_range: [-17, 0, 8.8], end_range: [16, 25, 8.8]}).then(function(res) {
           extract_ids(res).should.deep.equal(['4','5'],
             "should return a subset of the geometries " +
             "(3rd dimension is single point)");
@@ -211,11 +211,16 @@ function tests_with_3dgeometry (db) {
         extract_ids(res).should.deep.equal([ '0', '9', '10', '1', '2', '3', '4', '5', '6', '7', '8' ].sort(),
           'should return a subset of the geometries');
       }).then(function(){
-        return db.spatial('spatial/with3DGeometry', {start_range: [0, 0, 19], end_range: [20, 25, 20]}).then(function(res){
+        return db.spatial('spatial/with3DGeometry', {include_docs:true,start_range: [0, 0, 19], end_range: [20, 25, 20]}).then(function(res){
           extract_ids(res).should.deep.equal(['5','6'],
             "should return a subset of the geometries " +
             "(3rd dimension is single point)");
             });
+        }).then(function(){
+          return db.spatial('spatial/with3DGeometry',function(_,resp){
+            extract_ids(res).should.deep.equal([ '0', '9', '10', '1', '2', '3', '4', '5', '6', '7', '8' ].sort(),
+          'work on empty');
+          }).then(function(){});
         }).then(success,failure);
         });
 }
@@ -226,6 +231,11 @@ function tests_with_4dgeometry (db) {
           'should return a subset of the geometries');
       }).then(function(){
         return db.spatial('spatial/with4DGeometry', {start_range: [0, 0, 19,25], end_range: [20, 25, 20,36]}).then(function(res){
+          extract_ids(res).should.deep.equal(['5','6'],
+            "should return a subset of the geometries");
+            });
+        }).then(function(){
+        return db.spatial('spatial/with4DGeometry', {include_docs:true,start_range: [0, 0, 19,25], end_range: [20, 25, 20,36]}).then(function(res){
           extract_ids(res).should.deep.equal(['5','6'],
             "should return a subset of the geometries");
             });
@@ -285,19 +295,19 @@ it("range tests 1", function(done) {
         emit([{
           type: "Point",
           coordinates: doc.loc
-        }, [doc.integer, doc.integer+5]], doc.string);
+        }, [doc.integer, doc.integer+5]], {string:doc.string});
       }.toString(),
       with3DGeometry: function(doc) {
         emit({
           type: "Point",
           coordinates: [doc.integer, doc.integer+5, doc.integer+14]
-        }, doc.string);
+        }, {_id:(doc._id+1)});
       }.toString(),
       with4DGeometry: function(doc) {
         emit({
           type: "Point",
           coordinates: [doc.integer, doc.integer+5, doc.integer+14,doc.integer*doc.integer]
-        }, doc.string);
+        }, doc);
       }.toString(),
       noGeometry: function(doc) {
         emit([[doc.integer, doc.integer+1], doc.integer*3,
@@ -350,5 +360,28 @@ it('range tests 3',function(done){
   }).then(done,done);
 });
 
+});
+describe('errors',function(){
+  it('should throw with a temp function',function(done){
+    
+    create('test4').then(function(db){
+      return db.spatial(function(){});
+    }).then(null,function(reason){
+      reason.should.deep.equal({
+          status: 400,
+          error: 'invalid_request',
+          reason: 'Querying with a function is not supported for Spatial Views'
+        });
+      return;
+    }).then(function(a){
+      return destroy('test4').then(function(){
+        return a;
+      });
+    },function(a){
+      return destroy('test4').then(function(){
+        throw a;
+      });
+    }).then(done,done);
+  });
 });
 });

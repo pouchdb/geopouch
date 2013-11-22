@@ -5,7 +5,7 @@ var denodify = require('lie-denodify');
 // and storing the result of the map function (possibly using the upcoming
 // extracted adapter functions)
 var isArray = Array.isArray || function(obj) {
-  return type(obj) === "array";
+  return obj instanceof Array;
 };
 
 function normalizeKey(key) {
@@ -92,9 +92,8 @@ function Spatial(db) {
           //in this special case, join on _id (issue #106)
           if (val && typeof val === 'object' && val._id){
             get(val._id).then(function(joined_doc){
-                if (joined_doc) {
                   viewRow.doc = joined_doc;
-                }
+            },function(){}).then(function(){
                 results.push(viewRow);
                 checkComplete();
               });
@@ -176,18 +175,20 @@ function Spatial(db) {
     }
     callback = callback || function(){};
     opts = opts||{}
+    var result;
     if (typeof fun !== 'string') {
-      return callback ? callback({
-        status: 400,
-        error: 'invalid_request',
-        reason: 'Querying with a function is not supported for Spatial Views'
-      }) : undefined;
+      result = promise(function(success,failure){
+          failure({
+          status: 400,
+          error: 'invalid_request',
+          reason: 'Querying with a function is not supported for Spatial Views'
+        });
+      });
+    }else{
+      result = spatialQuery(fun, opts);
     }
-    var result = spatialQuery(fun, opts);
     result.then(function(resp){
-      if(typeof callback === 'function'){
         callback(null,resp);
-      }
     },callback);
     return result;
   }
