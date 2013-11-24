@@ -62,6 +62,9 @@ function within(key, start_range, end_range) {
   return true;
 };
 function Spatial(db) {
+  if(!(this instanceof Spatial)){
+    return new Spatial(db);
+  }
   var get = denodify(db.get);
   function viewQuery(fun, options) {
     return promise(function(success,failure){
@@ -144,7 +147,14 @@ function Spatial(db) {
     var params = [];
 
     // TODO vmx 2013-01-27: Support skip and limit
-
+    if (typeof opts.skip !== 'undefined') {
+      params.push('skip=' + encodeURIComponent(JSON.stringify(
+        opts.skip)));
+    }
+    if (typeof opts.limit !== 'undefined') {
+      params.push('limit=' + encodeURIComponent(JSON.stringify(
+        opts.limit)));
+    }
     if (typeof opts.start_range !== 'undefined') {
       params.push('start_range=' + encodeURIComponent(JSON.stringify(
         opts.start_range)));
@@ -163,12 +173,12 @@ function Spatial(db) {
 
     // We are referencing a query defined in the design doc
     var parts = location.split('/');
-    return db.request({
+    return request({
       method: 'GET',
       url: '_design/' + parts[0] + '/_spatial/' + parts[1] + params
     });
   }
-  function query(fun,opts,callback){
+  this.spatial = function (fun,opts,callback){
     if (typeof opts === 'function') {
       callback = opts;
       opts = {};
@@ -202,7 +212,6 @@ function Spatial(db) {
       return viewQuery(doc.spatial[parts[1]], opts);
     });
   }
-  return {spatial: query};
 };
 function rotateCoords(coords){
   var mins = coords[0];
