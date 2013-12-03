@@ -1,5 +1,6 @@
 var promise = require('lie');
 var denodify = require('lie-denodify');
+var calculateBbox = require('geojson-bounding-volume');
 // If we wanted to store incremental views we can do it here by listening
 // to the changes feed (keeping track of our last update_seq between page loads)
 // and storing the result of the map function (possibly using the upcoming
@@ -221,51 +222,6 @@ function rotateCoords(coords){
   });
 }
 // Store it in the Spatial object, so we can test it
-function calculateBbox(geom) {
-  var coords = geom.coordinates;
-  if (geom.type === 'Point') {
-    return [coords, coords];
-  }
-  if (geom.type === 'GeometryCollection') {
-    coords = geom.geometries.map(function(g) {
-      return calculateBbox(g);
-    });
-
-    // Merge all bounding boxes into one big one that encloses all
-    return coords.reduce(function (acc, bbox) {
-      return [
-      acc[0].map(function(a,i){
-        return Math.min(a,bbox[0][i]);
-      }),
-      acc[1].map(function(a,i){
-        return Math.max(a,bbox[1][i]);
-      })
-      ];
-    });
-  }
-
-  // Flatten coords as much as possible
-  while (Array.isArray(coords[0][0])) {
-    coords = coords.reduce(function(a, b) {
-      return a.concat(b);
-    });
-  };
-
-  // Calculate the enclosing bounding box of all coordinates
-  return coords.reduce(function (acc, coord) {
-    if (acc === null) {
-      return [coord, coord];
-    }
-    return [
-    acc[0].map(function(a,i){
-      return Math.min(a,coord[i]);
-    }),
-    acc[1].map(function(a,i){
-      return Math.max(a,coord[i]);
-    })
-    ];
-  }, null);
-};
 Spatial.calculateBbox = function(coords){
   return rotateCoords(calculateBbox(coords));
 }

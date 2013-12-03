@@ -23,7 +23,8 @@
   },
   "dependencies": {
     "lie-denodify": "~0.1.1",
-    "lie": "~2.3.0"
+    "lie": "~2.3.0",
+    "geojson-bounding-volume": "~0.1.1"
   },
   "devDependencies": {
     "chai": "~1.8.1",
