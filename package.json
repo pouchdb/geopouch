@@ -1,6 +1,6 @@
 {
   "name": "geopouch",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Put some geo in your pouch",
   "main": "index.js",
   "repository": {
