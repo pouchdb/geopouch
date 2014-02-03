@@ -39,7 +39,7 @@ function normalizeKey(key) {
     key: newKey,
     geometry: geometry
   };
-};
+}
 function within(key, start_range, end_range) {
   var start;
   var end;
@@ -47,21 +47,20 @@ function within(key, start_range, end_range) {
     start = key[i][0];
     end = key[i][1];
     if (
-      ((start_range[i] === null && (start <= end_range[i] || end_range[i] === null))
+      ((start_range[i] === null && (start <= end_range[i] || end_range[i] === null)) ||
        // Start is set
-        || (start <= end_range[i] || end_range[i] === null))
-        &&
+        (start <= end_range[i] || end_range[i] === null)) &&
         // Wildcard at the end
-       ((end_range[i] === null && (end >= start_range[i] || start_range[i] === null))
+        ((end_range[i] === null && (end >= start_range[i] || start_range[i] === null)) ||
         // End is set
-        || (end >= start_range[i] || start_range[i] === null))) {
+        (end >= start_range[i] || start_range[i] === null))) {
         continue;
     } else {
       return false;
     }
   }
   return true;
-};
+}
 function Spatial(db) {
   if(!(this instanceof Spatial)){
     return new Spatial(db);
@@ -107,7 +106,7 @@ function Spatial(db) {
           }
         }
         results.push(viewRow);
-      };
+      }
 
       // ugly way to make sure references to 'emit' in map/reduce bind to the
       // above emit
@@ -185,7 +184,7 @@ function Spatial(db) {
       opts = {};
     }
     callback = callback || function(){};
-    opts = opts||{}
+    opts = opts||{};
     var result;
     if (typeof fun !== 'string') {
       result = promise(function(success,failure){
@@ -202,7 +201,7 @@ function Spatial(db) {
         callback(null,resp);
     },callback);
     return result;
-  }
+  };
   function spatialQuery(fun, opts) {
     if (db.type() === 'http') {
       return httpQuery(fun, opts);
@@ -213,7 +212,7 @@ function Spatial(db) {
       return viewQuery(doc.spatial[parts[1]], opts);
     });
   }
-};
+}
 function rotateCoords(coords){
   var mins = coords[0];
   var maxs = coords[1];
@@ -224,7 +223,7 @@ function rotateCoords(coords){
 // Store it in the Spatial object, so we can test it
 Spatial.calculateBbox = function(coords){
   return rotateCoords(calculateBbox(coords));
-}
+};
 // Deletion is a noop since we dont store the results of the view
 Spatial._delete = function() { };
 
