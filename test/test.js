@@ -1,11 +1,11 @@
 
 var Pouch = require('pouchdb');
 var Spatial = require('../')
-Pouch.plugin('Spatial',Spatial);
+Pouch.plugin(Spatial);
 require('chai').should();
 var denodify = require('lie-denodify');
 var promise = require('lie');
-var destroy = denodify(Pouch.destroy);
+var destroy = denodify(Pouch.destroy.bind(Pouch));
 var create = denodify(Pouch);
 describe('Spatial',function(){
 
@@ -152,8 +152,7 @@ it("Basic tests from GeoCouch test suite", function(done) {
       return {_id: (i).toString(), geom: x};
     });
     docs.push(designDoc);
-    var bulkDocs = denodify(db.bulkDocs);
-    bulkDocs({docs: docs}, {}).then(function() {
+    db.bulkDocs({docs: docs}, {}).then(function() {
       db.spatial('geojson/test').then(function(res) {
         res.rows.should.have.length(GEOJSON_GEOMS.length,
           "The same number of returned geometries is correct");
@@ -217,7 +216,10 @@ function tests_with_3dgeometry (db) {
             "(3rd dimension is single point)");
             });
         }).then(function(){
-          return db.spatial('spatial/with3DGeometry',function(_,resp){
+          return db.spatial('spatial/with3DGeometry',function(_,res){
+            if (_) {
+              throw _;
+            }
             extract_ids(res).should.deep.equal([ '0', '9', '10', '1', '2', '3', '4', '5', '6', '7', '8' ].sort(),
           'work on empty');
           }).then(function(){});
