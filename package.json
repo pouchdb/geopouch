@@ -8,7 +8,8 @@
     "url": "git://github.com/calvinmetcalf/geopouch.git"
   },
   "scripts": {
-    "test": "./node_modules/istanbul/lib/cli.js test ./node_modules/mocha/bin/_mocha test/test.js"
+    "test": "./node_modules/istanbul/lib/cli.js test ./node_modules/mocha/bin/_mocha test/test.js",
+    "build": "mkdir -p dist && browserify index.js -s geopouch -o dist/geopouch.js"
   },
   "keywords": [
     "geospatial",
@@ -22,14 +23,15 @@
     "url": "https://github.com/calvinmetcalf/geopouch/issues"
   },
   "dependencies": {
-    "lie-denodify": "~0.1.1",
-    "lie": "~2.3.0",
-    "geojson-bounding-volume": "~0.1.1"
+    "geojson-bounding-volume": "~0.1.1",
+    "lie-denodify": "~0.1.2",
+    "lie": "~2.5.3"
   },
   "devDependencies": {
     "chai": "~1.8.1",
     "mocha": "~1.14.0",
-    "pouchdb": "0.0.14",
-    "istanbul": "~0.1.45"
+    "pouchdb": "2.0.0",
+    "istanbul": "~0.1.45",
+    "browserify": "~3.24.11"
   }
 }
