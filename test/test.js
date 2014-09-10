@@ -1,6 +1,6 @@
 
 var Pouch = require('pouchdb');
-var Spatial = require('../')
+var Spatial = require('../');
 Pouch.plugin(Spatial);
 require('chai').should();
 var denodify = require('lie-denodify');
