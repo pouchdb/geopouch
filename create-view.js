@@ -15,10 +15,7 @@ function MD5(string) {
 }
 
 
-module.exports = function (sourceDB, viewName, mapFun, temporary) {
-
-  // the "undefined" part is for backwards compatibility
-  var viewSignature = mapFun.toString();
+module.exports = function (sourceDB, viewSignature, temporary) {
 
   if (!temporary && sourceDB._cachedViews) {
     var cachedView = sourceDB._cachedViews[viewSignature];
@@ -36,10 +33,8 @@ module.exports = function (sourceDB, viewName, mapFun, temporary) {
     // (e.g. when the _design doc is deleted, remove all associated view data)
     function diffFunction(doc) {
       doc.views = doc.views || {};
-      var fullViewName = viewName;
-      if (fullViewName.indexOf('/') === -1) {
-        fullViewName = viewName + '/' + viewName;
-      }
+      var fullViewName = viewSignature;
+      
       var depDbs = doc.views[fullViewName] = doc.views[fullViewName] || {};
       /* istanbul ignore if */
       if (depDbs[depDbName]) {

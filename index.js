@@ -1,8 +1,8 @@
 var Promise = require('bluebird');
 var RTree = require('async-rtree');
 var calculatebounds = require('geojson-bounding-volume');
-//var createView = require('./create-view');
-//var Store = require('./store');
+var createView = require('./create-view');
+var Store = require('./store');
 
 
 exports.spatial = function (fun, bbox, cb) {
@@ -10,41 +10,45 @@ exports.spatial = function (fun, bbox, cb) {
     bbox = [[bbox[0], bbox[1]], [bbox[2], bbox[3]]];
   }
   var db = this;
-  var opts = {
-    db: db,
-    viewName: 'temp',
-    map: fun,
-    temporary: true
-  };
-  var idString;
+  var viewName, temporary;
   if (typeof fun === 'function') {
-    idString = fun.toString();
+    viewName = 'temporary/temporary';
+    temporary = true;
   } else {
-    idString = fun;
+    viewName = fun;
   }
-  var store = new RTree();
-  return makeFunc(db, fun).then(function (func) {
-    function addDoc(doc) {
-      var i = 0;
-      var fulfill;
-      var promise = new Promise(function (f) {
-        fulfill = f;
+  return createView(db, viewName, temporary).then(function (viewDB) {
+    function has(key) {
+      return viewDB.db.get(key).then(function () {
+        return true;
+      }, function () {
+        return false;
       });
-      var id = doc._id;
-      function emit(doc) {
-        fulfill(store.insert(id, calculatebounds(doc)));
-      }
-      func(doc, emit);
-      return promise;
     }
-    return db.allDocs({include_docs: true}).then(function (res) {
-      return Promise.all(res.rows.filter(function (doc) {
-        if (!('deleted' in doc) && doc.id.indexOf('_design/') !== 0) {
-          return true;
+    var store = new RTree(new Store(viewDB.db));
+    return makeFunc(db, fun).then(function (func) {
+      function addDoc(doc) {
+        var i = 0;
+        var fulfill;
+        var promise = new Promise(function (f) {
+          fulfill = f;
+        });
+        var id = doc._id;
+        function emit(doc) {
+          fulfill(store.insert(id, calculatebounds(doc)));
         }
-      }).map(function (doc) {
-        return addDoc(doc.doc);
-      }));
+        func(doc, emit);
+        return promise;
+      }
+      return db.allDocs({include_docs: true}).then(function (res) {
+        return Promise.all(res.rows.filter(function (doc) {
+          if (!('deleted' in doc) && doc.id.indexOf('_design/') !== 0) {
+            return true;
+          }
+        }).map(function (doc) {
+          return addDoc(doc.doc);
+        }));
+      });
     });
   }).then(function () {
     return store.query(bbox, true);

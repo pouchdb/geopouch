@@ -3,9 +3,18 @@ module.expots = Store;
 function Store(db) {
   this.store = db;
 }
+function makeKey(key) {
+  return 'node_' + key;
+}
 Store.prototype.get = function(key, cb) {
-  this.db.get(key, cb);
+  this.db.get(key, function (err, resp) {
+    if (err) {
+      return cb(err);
+    }
+    cb(doc.value);
+  });
 };
+
 Store.prototype.put = function(key, value, cb) {
   var self = this;
   this.db.get(key).catch(function () {
