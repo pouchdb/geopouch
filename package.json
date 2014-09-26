@@ -8,7 +8,7 @@
     "url": "git://github.com/calvinmetcalf/geopouch.git"
   },
   "scripts": {
-    "test": "./node_modules/istanbul/lib/cli.js test ./node_modules/mocha/bin/_mocha test/test.js",
+    "test": "mocha test/test.js",
     "build": "mkdir -p dist && browserify index.js -s geopouch -o dist/geopouch.js"
   },
   "keywords": [
@@ -29,10 +29,10 @@
     "spark-md5": "0.0.5"
   },
   "devDependencies": {
-    "chai": "~1.8.1",
-    "mocha": "~1.14.0",
-    "pouchdb": "2.0.0",
-    "istanbul": "~0.1.45",
-    "browserify": "~3.24.11"
+    "pouchdb": "^3.0.6",
+    "chai": "^1.9.1",
+    "mocha": "^1.21.4",
+    "istanbul": "^0.3.2",
+    "browserify": "^5.12.0"
   }
 }
