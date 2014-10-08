@@ -7,7 +7,7 @@ var towns = require('./towns.json');
 var memdown = require('memdown');
 describe('Spatial', function () {
   it ('should work', function (done) {
-    var db = new Pouch('test', {db: memdown});
+    var db = new Pouch('test1', {db: memdown});
     db.bulkDocs(towns.features.map(function (doc) {
       doc._id = doc.properties.TOWN;
       return doc;
@@ -26,7 +26,7 @@ describe('Spatial', function () {
     }).catch(done);
   });
   it ('should work with doc', function (done) {
-    var db = new Pouch('test', {db: memdown});
+    var db = new Pouch('test2', {db: memdown});
     db.put({
       _id: '_design/foo',
       spatial: {
@@ -38,11 +38,13 @@ describe('Spatial', function () {
       return db.bulkDocs(towns.features.map(function (doc) {
         doc._id = doc.properties.TOWN;
         return doc;
-      }));
+      })).then(function () {
+        return db.get('EASTHAMPTON').then(function (doc) {
+          return db.remove(doc);
+        });
+      });
     }).then(function () {
-      return db.spatial(function (doc) {
-        emit(doc.geometry);
-      },[ -70.98495,42.24867, -70.98495,42.24867]).then(function (resp) {
+      return db.spatial('foo/bar',[ -70.98495,42.24867, -70.98495,42.24867]).then(function (resp) {
         resp.length.should.equal(2);
         var nr = resp.map(function(i) {
           return i.id;

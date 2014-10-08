@@ -3,7 +3,7 @@ var RTree = require('async-rtree');
 var calculatebounds = require('geojson-bounding-volume');
 var createView = require('./create-view');
 var Store = require('./store');
-
+var upsert = require('./upsert');
 
 exports.spatial = function (fun, bbox, cb) {
   if (bbox.length === 4) {
@@ -17,37 +17,108 @@ exports.spatial = function (fun, bbox, cb) {
   } else {
     viewName = fun;
   }
+  var store;
   return createView(db, viewName, temporary).then(function (viewDB) {
-    function has(key) {
-      return viewDB.db.get(key).then(function () {
-        return true;
+    
+    rawStore = new Store(viewDB.db);
+    store = new RTree(rawStore);
+    function delDoc(id) {
+      return new Promise(function (fullfill, reject) {
+        rawStore.get(key, function (err, bbox) {
+          if (err) {
+            reject(err);
+          } else {
+            fullfill(bbox);
+          }
+        });
+      }).then(function (bbox) {
+        return Promise.all([
+            new Promise(function (fullfill, reject) {
+              rawStore.del(key, bbox, function (err) {
+                if (err) {
+                  reject(err);
+                } else {
+                  fullfill();
+                }
+              });
+            }),
+            store.remove(key, bbox)
+        ]);
       }, function () {
-        return false;
+        // no big deal, no need to delete it
       });
     }
-    var store = new RTree(new Store(viewDB.db));
+    function insertOrUpdate(key, newBBox) {
+      return new Promise(function (fullfill, reject) {
+        rawStore.get(key, function (err, bbox) {
+          if (err) {
+            reject(err);
+          } else {
+            fullfill(bbox);
+          }
+        });
+      }).then(function (bbox) {
+        return store.remove(key, bbox);
+      }, function () {
+        //we can ignore errors here
+      }).then(function () {
+        return Promise.all([
+          new Promise(function (fullfill, reject) {
+            rawStore.put(key, newBBox, function (err) {
+              if (err) {
+                reject(err);
+              } else {
+                fullfill();
+              }
+            });
+          }),
+          store.insert(key, newBBox)
+        ]);
+      });
+    }
     return makeFunc(db, fun).then(function (func) {
       function addDoc(doc) {
-        var i = 0;
         var fulfill;
         var promise = new Promise(function (f) {
           fulfill = f;
         });
         var id = doc._id;
         function emit(doc) {
-          fulfill(store.insert(id, calculatebounds(doc)));
+          fulfill(insertOrUpdate(id, calculatebounds(doc)));
         }
         func(doc, emit);
         return promise;
       }
-      return db.allDocs({include_docs: true}).then(function (res) {
-        return Promise.all(res.rows.filter(function (doc) {
-          if (!('deleted' in doc) && doc.id.indexOf('_design/') !== 0) {
+      var lastSeq;
+      return db.get('_local/gclastSeq').catch(function () {
+        return {_id: '_local/gclastSeq', last_seq: 0};
+      }).then(function (doc) {
+        lastSeq = doc;
+        return db.changes({
+          include_docs: true,
+          since: doc.last_seq
+        });
+      }).then(function (res) {
+        return Promise.all(res.results.filter(function (doc) {
+          if (doc.id.indexOf('_design/') !== 0) {
             return true;
           }
         }).map(function (doc) {
+          if (doc.deleted) {
+            return delDoc(doc.id);
+          }
           return addDoc(doc.doc);
-        }));
+        })).then(function () {
+          lastSeq.last_seq = res.last_seq;
+          return upsert(db, '_local/gclastSeq', function (doc) {
+            if (!doc.last_seq) {
+              return lastSeq;
+            } else {
+              doc.last_seq = Math.max(doc.last_seq, lastSeq.last_seq);
+              return doc;
+            }
+          });
+        });
       });
     });
   }).then(function () {

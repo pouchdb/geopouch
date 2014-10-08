@@ -1,17 +1,17 @@
 var Promise = require('lie');
-module.expots = Store;
+module.exports = Store;
 function Store(db) {
-  this.store = db;
+  this.db = db;
 }
 function makeKey(key) {
   return 'node_' + key;
 }
 Store.prototype.get = function(key, cb) {
-  this.db.get(key, function (err, resp) {
+  this.db.get(key, function (err, doc) {
     if (err) {
       return cb(err);
     }
-    cb(doc.value);
+    cb(null, doc.value);
   });
 };
 
