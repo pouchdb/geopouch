@@ -17,12 +17,20 @@ exports.spatial = function (fun, bbox, cb) {
   } else {
     viewName = fun;
   }
-  var store;
+  var store, rawStore;
   return createView(db, viewName, temporary).then(function (viewDB) {
     
-    rawStore = new Store(viewDB.db);
-    store = new RTree(rawStore);
-    function delDoc(id) {
+    if (db._rawStore) {
+      rawStore = db._rawStore;
+    } else {
+      rawStore = db._rawStore = new Store(viewDB.db);
+    }
+    if (db._rStore) {
+      store = db._rStore;
+    } else {
+      store = db._rStore = new RTree(rawStore);
+    }
+    function delDoc(key) {
       return new Promise(function (fullfill, reject) {
         rawStore.get(key, function (err, bbox) {
           if (err) {
@@ -34,7 +42,7 @@ exports.spatial = function (fun, bbox, cb) {
       }).then(function (bbox) {
         return Promise.all([
             new Promise(function (fullfill, reject) {
-              rawStore.del(key, bbox, function (err) {
+              rawStore.del(key, function (err) {
                 if (err) {
                   reject(err);
                 } else {
@@ -45,7 +53,7 @@ exports.spatial = function (fun, bbox, cb) {
             store.remove(key, bbox)
         ]);
       }, function () {
-        // no big deal, no need to delete it
+
       });
     }
     function insertOrUpdate(key, newBBox) {
@@ -123,7 +131,19 @@ exports.spatial = function (fun, bbox, cb) {
     });
   }).then(function () {
     return store.query(bbox, true);
-  }).nodeify(cb);
+  }).then(function (resp) {
+    if (cb) {
+      return cb(null, resp);
+    } else {
+      return resp;
+    }
+  }, function (err) {
+    if (cb) {
+      return cb(err);
+    } else {
+      throw err;
+    }
+  });
   
 };
 

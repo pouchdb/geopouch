@@ -55,6 +55,44 @@ describe('Spatial', function () {
       });
     }).catch(done);
   });
+  it ('should work with doc and delete', function (done) {
+    var db = new Pouch('test3', {db: memdown});
+    db.put({
+      _id: '_design/foo',
+      spatial: {
+        bar: function (doc) {
+          emit(doc.geometry);
+        }.toString()
+      }
+    }).then(function () {
+      return db.bulkDocs(towns.features.map(function (doc) {
+        doc._id = doc.properties.TOWN;
+        return doc;
+      }));
+    }).then(function () {
+      return db.spatial('foo/bar',[ -70.98495,42.24867, -70.98495,42.24867]).then(function (resp) {
+        resp.length.should.equal(2);
+        var nr = resp.map(function(i) {
+          return i.id;
+        });
+        nr.sort();
+        nr.should.deep.equal(['BOSTON', 'QUINCY'], 'boston and quincy');
+        return db.get('BOSTON').then(function (doc) {
+          return db.remove(doc);
+        });
+      }).then(function () {
+        return db.spatial('foo/bar',[ -70.98495,42.24867, -70.98495,42.24867]).then(function (resp) {
+          resp.length.should.equal(1);
+          var nr = resp.map(function(i) {
+            return i.id;
+          });
+          nr.sort();
+          nr.should.deep.equal(['QUINCY'], 'quincy');
+          done();
+        });
+      });
+    }).catch(done);
+  });
 });
 // describe('Spatial',function(){
 
