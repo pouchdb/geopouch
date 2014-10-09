@@ -1,4 +1,4 @@
-Spatial Pouch
+Spatial Pouch [![Build Status](https://travis-ci.org/pouchdb/geopouch.svg?branch=rtree)](https://travis-ci.org/pouchdb/geopouch)
 ====
 
 Spatial plugin from PouchDB extracted and supporting N dimentional coordinates.

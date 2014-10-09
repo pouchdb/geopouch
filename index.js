@@ -1,4 +1,4 @@
-var Promise = require('bluebird');
+var Promise = require('lie');
 var RTree = require('async-rtree');
 var calculatebounds = require('geojson-bounding-volume');
 var createView = require('./create-view');
