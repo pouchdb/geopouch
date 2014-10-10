@@ -6,6 +6,7 @@ var should = require('chai').should();
 var towns = require('./towns.json');
 var memdown = require('memdown');
 describe('Spatial', function () {
+  this.timeout(50000);
   it ('should work', function (done) {
     var db = new Pouch('test1', {db: memdown});
     db.bulkDocs(towns.features.map(function (doc) {

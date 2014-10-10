@@ -20,69 +20,10 @@ exports.spatial = function (fun, bbox, cb) {
   var store, rawStore;
   return createView(db, viewName, temporary).then(function (viewDB) {
     
-    if (db._rawStore) {
-      rawStore = db._rawStore;
-    } else {
-      rawStore = db._rawStore = new Store(viewDB.db);
-    }
     if (db._rStore) {
       store = db._rStore;
     } else {
-      store = db._rStore = new RTree(rawStore);
-    }
-    function delDoc(key) {
-      return new Promise(function (fullfill, reject) {
-        rawStore.get(key, function (err, bbox) {
-          if (err) {
-            reject(err);
-          } else {
-            fullfill(bbox);
-          }
-        });
-      }).then(function (bbox) {
-        return Promise.all([
-            new Promise(function (fullfill, reject) {
-              rawStore.del(key, function (err) {
-                if (err) {
-                  reject(err);
-                } else {
-                  fullfill();
-                }
-              });
-            }),
-            store.remove(key, bbox)
-        ]);
-      }, function () {
-
-      });
-    }
-    function insertOrUpdate(key, newBBox) {
-      return new Promise(function (fullfill, reject) {
-        rawStore.get(key, function (err, bbox) {
-          if (err) {
-            reject(err);
-          } else {
-            fullfill(bbox);
-          }
-        });
-      }).then(function (bbox) {
-        return store.remove(key, bbox);
-      }, function () {
-        //we can ignore errors here
-      }).then(function () {
-        return Promise.all([
-          new Promise(function (fullfill, reject) {
-            rawStore.put(key, newBBox, function (err) {
-              if (err) {
-                reject(err);
-              } else {
-                fullfill();
-              }
-            });
-          }),
-          store.insert(key, newBBox)
-        ]);
-      });
+      store = db._rStore = new RTree(new Store(viewDB.db));
     }
     return makeFunc(db, fun).then(function (func) {
       function addDoc(doc) {
@@ -92,7 +33,7 @@ exports.spatial = function (fun, bbox, cb) {
         });
         var id = doc._id;
         function emit(doc) {
-          fulfill(insertOrUpdate(id, calculatebounds(doc)));
+          fulfill(store.insert(id, calculatebounds(doc)));
         }
         func(doc, emit);
         return promise;
@@ -113,7 +54,9 @@ exports.spatial = function (fun, bbox, cb) {
           }
         }).map(function (doc) {
           if (doc.deleted) {
-            return delDoc(doc.id);
+            return store.remove(doc.id).catch(function () {
+              // might not be in there
+            });
           }
           return addDoc(doc.doc);
         })).then(function () {
