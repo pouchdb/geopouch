@@ -15,8 +15,9 @@ function MD5(string) {
 }
 
 
-module.exports = function (sourceDB, viewSignature, temporary) {
+module.exports = function (sourceDB, viewCode, temporary, viewName) {
 
+  var viewSignature = (temporary ? 'temp' : MD5(viewCode.toString()));
   if (!temporary && sourceDB._cachedViews) {
     var cachedView = sourceDB._cachedViews[viewSignature];
     if (cachedView) {
@@ -26,8 +27,7 @@ module.exports = function (sourceDB, viewSignature, temporary) {
 
   return sourceDB.info().then(function (info) {
 
-    var depDbName = info.db_name + '-gcview-' +
-      (temporary ? 'temp' : MD5(viewSignature));
+    var depDbName = info.db_name + '-gcview-' + viewSignature;
 
     // save the view name in the source PouchDB so it can be cleaned up if necessary
     // (e.g. when the _design doc is deleted, remove all associated view data)
@@ -42,6 +42,12 @@ module.exports = function (sourceDB, viewSignature, temporary) {
       }
       depDbs[depDbName] = true;
       return doc;
+    }
+    function cleanUpView(doc) {
+      if (!('views' in doc) || !(viewSignature in doc.views) || !(depDbName in doc.views[viewSignature])) {
+        return;
+      }
+      delete doc.views[viewSignature][depDbName];
     }
     return upsert(sourceDB, '_local/gcviews', diffFunction).then(function () {
       return sourceDB.registerDependentDatabase(depDbName).then(function (res) {
@@ -60,12 +66,31 @@ module.exports = function (sourceDB, viewSignature, temporary) {
           }
         }).then(function (lastSeqDoc) {
           view.seq = lastSeqDoc ? lastSeqDoc.seq : 0;
+          var viewID;
           if (!temporary) {
             sourceDB._cachedViews = sourceDB._cachedViews || {};
             sourceDB._cachedViews[viewSignature] = view;
             view.db.on('destroyed', function () {
               delete sourceDB._cachedViews[viewSignature];
+              upsert(sourceDB, '_local/gcviews', cleanUpView);
             });
+            viewID = '_design/' + viewName.split('/')[0];
+            sourceDB._viewListeners = sourceDB._viewListeners || {};
+            if (!sourceDB._viewListeners[viewID]) {
+              sourceDB.info().then(function (info) {
+                sourceDB._viewListeners[viewID] = sourceDB.changes({live: true, since: info.update_seq});
+                sourceDB._viewListeners[viewID].on('change', function (ch) {
+                  if (ch.id !== viewID) {
+                    return;
+                  }
+                  view.db.destroy();
+                  sourceDB._viewListeners[viewID].cancel();
+                  delete sourceDB._viewListeners[viewID];
+                  delete sourceDB._cachedViews[viewSignature];
+                  upsert(sourceDB, '_local/gcviews', cleanUpView);
+                });
+              });
+            }
           }
           return view;
         });
