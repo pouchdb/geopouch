@@ -35,21 +35,18 @@ exports.spatial = function (fun, bbox, opts, cb) {
       }
 
       function addDoc(doc) {
-        var fulfill;
-        var promise = new Promise(function (f) {
-          fulfill = f;
-        });
         var id = doc._id;
-        var emited = false;
+        var emited = [];
+        var i = 0;
         function emit(doc) {
-          emited = true;
-          fulfill(store.insert(id, calculatebounds(doc)));
+          if (i++) {
+            emited.push(store.append(id , calculatebounds(doc)));
+          } else {
+            emited.push(store.insert(id , calculatebounds(doc)));
+          }
         }
         func(doc, emit);
-        if (!emited) {
-          fulfill();
-        }
-        return promise;
+        return Promise.all(emited);
       }
       var lastSeq;
       return viewDB.get('_local/gclastSeq').catch(function () {
@@ -88,7 +85,31 @@ exports.spatial = function (fun, bbox, opts, cb) {
       });
     });
   }).then(function () {
-    return store.query(bbox, true);
+    return new Promise(function (resolve, reject) {
+      var out = {};
+      var promises = [];
+      store.query(bbox).on('data', function (d) {
+        if (d.id in out) {
+          out[d.id].bboxen.push(d.bbox);
+        } else {
+          if (opts.include_docs) {
+            promises.push(db.get(d.id).then(function (doc) {
+              out[d.id].doc = doc;
+            }));
+          }
+          out[d.id] = {
+            id: d.id,
+            bboxen: [d.bbox]
+          };
+        }
+      }).on('error', reject).on('end', function () {
+        resolve(Promise.all(promises).then(function () {
+          return Object.keys(out).map(function (id) {
+            return out[id];
+          });
+        }));
+      });
+    });
   }).then(function (resp) {
     if (cb) {
       return cb(null, resp);
