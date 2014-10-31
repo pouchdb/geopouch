@@ -29,7 +29,7 @@
     "async-rtree": "^1.1.0"
   },
   "devDependencies": {
-    "pouchdb": "^3.0.6",
+    "pouchdb": "pouchdb/pouchdb",
     "chai": "^1.9.1",
     "mocha": "^1.21.4",
     "istanbul": "^0.3.2",
