@@ -5,7 +5,8 @@ var createView = require('./create-view');
 var Store = require('./store');
 var upsert = require('./upsert');
 
-exports.spatial = function (fun, bbox, opts, cb) {
+exports.spatial = spatial;
+function spatial(fun, bbox, opts, cb) {
   if (bbox.length === 4) {
     bbox = [[bbox[0], bbox[1]], [bbox[2], bbox[3]]];
   }
@@ -26,7 +27,29 @@ exports.spatial = function (fun, bbox, opts, cb) {
       viewName = func;
       viewID = '_design/' + fun.split('/')[0];
     }
-    return createView(db, viewName, temporary, fun).then(function (viewDB) {
+    var view = createView(db, viewName, temporary, fun);
+    var updated = view.then(updateIndex(func));
+    if (opts.stale !== true) {
+      return updated;
+    } else {
+      return view;
+    }
+  }).then(queryIndex).then(function (resp) {
+    if (cb) {
+      return cb(null, resp);
+    } else {
+      return resp;
+    }
+  }, function (err) {
+    if (cb) {
+      return cb(err);
+    } else {
+      throw err;
+    }
+  });
+  
+  function updateIndex(func) {
+    return function (viewDB) {
       viewDB = viewDB.db;
       if (viewDB._rStore) {
         store = viewDB._rStore;
@@ -83,8 +106,9 @@ exports.spatial = function (fun, bbox, opts, cb) {
           });
         });
       });
-    });
-  }).then(function () {
+    };
+  }
+  function queryIndex() {
     return new Promise(function (resolve, reject) {
       var out = {};
       var promises = [];
@@ -110,22 +134,8 @@ exports.spatial = function (fun, bbox, opts, cb) {
         }));
       });
     });
-  }).then(function (resp) {
-    if (cb) {
-      return cb(null, resp);
-    } else {
-      return resp;
-    }
-  }, function (err) {
-    if (cb) {
-      return cb(err);
-    } else {
-      throw err;
-    }
-  });
-  
-};
-
+  }
+}
 function makeFunc (db, fun) {
   return new Promise (function (resolve, reject) {
     if (typeof fun === 'function') {

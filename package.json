@@ -26,14 +26,14 @@
     "geojson-bounding-volume": "^0.2.2",
     "lie": "^2.7.7",
     "spark-md5": "0.0.5",
-    "async-rtree": "^1.1.0"
+    "async-rtree": "^1.1.1"
   },
   "devDependencies": {
     "pouchdb": "pouchdb/pouchdb",
     "chai": "^1.9.1",
     "mocha": "^1.21.4",
     "istanbul": "^0.3.2",
-    "browserify": "^5.12.0",
-    "memdown": "^0.10.2"
+    "browserify": "^6.0.0",
+    "memdown": "^1.0.0"
   }
 }

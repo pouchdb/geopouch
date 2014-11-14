@@ -56,6 +56,30 @@ describe('Spatial', function () {
       });
     }).catch(done);
   });
+  it ('should work with doc and stale true', function (done) {
+    var db = new Pouch('test' + Math.random(), {db: memdown});
+    db.put({
+      _id: '_design/foo',
+      spatial: {
+        bar: function (doc) {
+          emit(doc.geometry);
+        }.toString()
+      }
+    }).then(function () {
+      return db.bulkDocs(towns.features.map(function (doc) {
+        doc._id = doc.properties.TOWN;
+        return doc;
+      }));
+    }).then(function () {
+      return db.spatial('foo/bar',[ -70.98495,42.24867, -70.98495,42.24867], {stale: true}).then(function (resp) {
+        resp.length.should.equal(0);
+        done();
+      }).catch(function (e) {
+        console.log(e);
+        done(e);
+      });
+    }).catch(done);
+  });
   it ('should work with a doc and include doc: true', function (done) {
     var db = new Pouch('test' + Math.random(), {db: memdown});
     db.put({
