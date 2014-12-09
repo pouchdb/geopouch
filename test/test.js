@@ -4,11 +4,21 @@ var Spatial = require('../');
 Pouch.plugin(Spatial);
 var should = require('chai').should();
 var towns = require('./towns.json');
-var memdown = require('memdown');
+// var memdown = require('memdown');
 describe('Spatial', function () {
-
+  var db;
+  beforeEach(function (done) {
+    db = new Pouch('testy');
+    db.then(function () {
+      done();
+    }, done);
+  });
+  afterEach(function (done) {
+    db.destroy().then(function () {
+      done();
+    }, done);
+  });
   it ('should work', function (done) {
-    var db = new Pouch('test' + Math.random(), {db: memdown});
     db.bulkDocs(towns.features.map(function (doc) {
       doc._id = doc.properties.TOWN;
       return doc;
@@ -27,7 +37,6 @@ describe('Spatial', function () {
     }).catch(done);
   });
   it ('should work with doc', function (done) {
-    var db = new Pouch('test' + Math.random(), {db: memdown});
     db.put({
       _id: '_design/foo',
       spatial: {
@@ -57,7 +66,6 @@ describe('Spatial', function () {
     }).catch(done);
   });
   it ('should work with doc and stale true', function (done) {
-    var db = new Pouch('test' + Math.random(), {db: memdown});
     db.put({
       _id: '_design/foo',
       spatial: {
@@ -81,7 +89,6 @@ describe('Spatial', function () {
     }).catch(done);
   });
   it ('should work with a doc and include doc: true', function (done) {
-    var db = new Pouch('test' + Math.random(), {db: memdown});
     db.put({
       _id: '_design/foo',
       spatial: {
@@ -111,7 +118,6 @@ describe('Spatial', function () {
     }).catch(done);
   });
   it ('should work with doc and delete', function (done) {
-    var db = new Pouch('test' + Math.random(), {db: memdown});
     db.put({
       _id: '_design/foo',
       spatial: {
@@ -150,7 +156,6 @@ describe('Spatial', function () {
   });
   it ('should allow updating the query designDoc', function (done) {
       this.timeout(50000);
-    var db = new Pouch('test' + Math.random(), {db: memdown});
     db.put({
       _id: '_design/foo',
       spatial: {

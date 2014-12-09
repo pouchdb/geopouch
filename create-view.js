@@ -2,22 +2,16 @@
 
 var upsert = require('./upsert');
 var crypto = require('crypto');
-var Md5 = require('spark-md5');
 var Promise = require('lie');
 
-function MD5(string) {
-  /* istanbul ignore else */
-  if (!process.browser) {
-    return crypto.createHash('md5').update(string).digest('hex');
-  } else {
-    return Md5.hash(string);
-  }
+function hash(string) {
+    return crypto.createHash('sha224').update(string).digest('hex');
 }
 
 
 module.exports = function (sourceDB, viewCode, temporary, viewName) {
 
-  var viewSignature = (temporary ? 'temp' : MD5(viewCode.toString()));
+  var viewSignature = (temporary ? 'temp' : hash(viewCode.toString()));
   if (!temporary && sourceDB._cachedViews) {
     var cachedView = sourceDB._cachedViews[viewSignature];
     if (cachedView) {

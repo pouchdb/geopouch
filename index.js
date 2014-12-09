@@ -6,9 +6,14 @@ var Store = require('./store');
 var upsert = require('./upsert');
 
 exports.spatial = spatial;
-function spatial(fun, bbox, opts, cb) {
+function spatial(fun, bbox, opts, cb, /*only needed if people use 2 bboxen-->*/cb2) {
   if (bbox.length === 4) {
     bbox = [[bbox[0], bbox[1]], [bbox[2], bbox[3]]];
+  }
+  if (Array.isArray(opts)) {
+    bbox = [bbox, opts];
+    opts = cb;
+    cb = cb2;
   }
   var db = this;
   var viewName, temporary;
@@ -81,6 +86,9 @@ function spatial(fun, bbox, opts, cb) {
           since: doc.last_seq
         });
       }).then(function (res) {
+        if (!res.results) {
+          return;
+        }
         return Promise.all(res.results.filter(function (doc) {
           if (doc.id.indexOf('_design/') !== 0) {
             return true;

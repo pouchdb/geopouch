@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Mocha Tests</title>
+    <link rel="stylesheet" href="../node_modules/mocha/mocha.css" />
+    <script src="../node_modules/mocha/mocha.js"></script>
+    <script>
+    mocha.setup({
+      ui:'bdd',
+      timeout:  50000
+    });
+    </script>
+    <script src="./test-bundle.js"></script>
+  </head>
+  <body>
+    <div id="mocha"></div>
+    <script>mocha.run()</script>
+  </body>
+</html>
