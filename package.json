@@ -8,7 +8,7 @@
     "url": "git://github.com/calvinmetcalf/geopouch.git"
   },
   "scripts": {
-    "test": "mocha test/test.js",
+    "test": "istanbul test _mocha test/test.js",
     "build": "mkdir -p dist && browserify index.js -s geopouch -o dist/geopouch.js",
     "build-test": "browserify test/test.js -o test/test-bundle.js"
   },

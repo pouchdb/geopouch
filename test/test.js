@@ -36,6 +36,27 @@ describe('Spatial', function () {
       });
     }).catch(done);
   });
+  it ('should work with 2 array bbox format', function (done) {
+    db.bulkDocs(towns.features.map(function (doc) {
+      doc._id = doc.properties.TOWN;
+      return doc;
+    })).then(function () {
+      db.spatial(function (doc) {
+        emit(doc.geometry);
+      },[ -70.98495,42.24867], [-70.98495,42.24867], function (err, resp) {
+        if (err) {
+          return done(err);
+        }
+        resp.length.should.equal(2);
+        var nr = resp.map(function(i) {
+          return i.id;
+        });
+        nr.sort();
+        nr.should.deep.equal(['BOSTON', 'QUINCY'], 'boston and quincy');
+        done();
+      });
+    }).catch(done);
+  });
   it ('should work with doc', function (done) {
     db.put({
       _id: '_design/foo',

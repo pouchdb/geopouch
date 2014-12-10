@@ -6,12 +6,6 @@ var Promise = require('lie');
 // the doc, or false if it doesn't need to do an update after all
 function upsert(db, docId, diffFun) {
   return new Promise(function (fulfill, reject) {
-    if (docId && typeof docId === 'object') {
-      docId = docId._id;
-    }
-    if (typeof docId !== 'string') {
-      return reject(new Error('doc id is required'));
-    }
 
     db.get(docId, function (err, doc) {
       if (err) {
@@ -34,7 +28,7 @@ function tryAndPut(db, doc, diffFun) {
     if (err.status !== 409) {
       throw err;
     }
-    return upsert(db, doc, diffFun);
+    return upsert(db, doc._id, diffFun);
   });
 }
 

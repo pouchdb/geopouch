@@ -3,9 +3,6 @@ module.exports = Store;
 function Store(db) {
   this.db = db;
 }
-function makeKey(key) {
-  return 'node_' + key;
-}
 Store.prototype.get = function(key, cb) {
   this.db.get(key, function (err, doc) {
     if (err) {
