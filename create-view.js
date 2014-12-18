@@ -1,11 +1,11 @@
 'use strict';
 
 var upsert = require('./upsert');
-var crypto = require('crypto');
+var sha = require('sha.js');
 var Promise = require('lie');
 
 function hash(string) {
-    return crypto.createHash('sha224').update(string).digest('hex');
+    return new sha.sha224().update(string).digest('hex');
 }
 
 
