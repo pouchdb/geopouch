@@ -26,8 +26,7 @@
   "dependencies": {
     "async-rtree": "^1.1.1",
     "geojson-bounding-volume": "^0.2.2",
-    "lie": "^2.8.0",
-    "sha.js": "^2.3.0"
+    "lie": "^2.8.0"
   },
   "devDependencies": {
     "browserify": "^7.0.0",
