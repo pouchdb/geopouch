@@ -28,13 +28,14 @@ Store.prototype.del = function(key, cb) {
   var self = this;
   this.db.get(key).then(function (doc) {
     return self.db.remove(doc);
-  }).then(function () {
+  }).then(function (r) {
     cb();
-  }, cb);
+  }, function (e) {
+    cb(e);
+  });
 };
 Store.prototype.batch = function(array, cb) {
   var self = this;
-  
   return Promise.all(array.map(function (item) {
     return new Promise(function (resolve, reject) {
       function callback(err, value) {

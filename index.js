@@ -68,12 +68,42 @@ function spatial(fun, bbox, opts, cb, /*only needed if people use 2 bboxen-->*/c
         var i = 0;
         function emit(doc) {
           if (i++) {
-            emited.push(store.append(id , calculatebounds(doc)));
+            emited.push(store.append(id, calculatebounds(doc)));
           } else {
-            emited.push(store.insert(id , calculatebounds(doc)));
+            emited.push(store.insert(id, calculatebounds(doc)));
           }
         }
-        func(doc, emit);
+        function fixMulti (doc) {
+          var type = doc.type;
+          switch (type) {
+            case 'MultiPoint':
+               return doc.coordinates.forEach(function (coord) {
+                emit({
+                  type: 'Point',
+                  coordinates: coord
+                });
+               });
+            case 'MultiLineString':
+               return doc.coordinates.forEach(function (coord) {
+                emit({
+                  type: 'LineString',
+                  coordinates: coord
+                });
+               });
+            case 'MultiPolygon':
+               return doc.coordinates.forEach(function (coord) {
+                emit({
+                  type: 'Polygon',
+                  coordinates: coord
+                });
+               });
+            case 'GeometryCollection':
+               return doc.geometries.forEach(fixMulti);
+            default:
+                return emit(doc);
+          }
+        }
+        func(doc, fixMulti);
         return Promise.all(emited);
       }
       var lastSeq;
