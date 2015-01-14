@@ -24,7 +24,8 @@
     "url": "https://github.com/calvinmetcalf/geopouch/issues"
   },
   "dependencies": {
-    "async-rtree": "^1.1.1",
+    "async-rtree": "^1.2.0",
+    "create-hash": "^1.0.2",
     "geojson-bounding-volume": "^0.2.2",
     "lie": "^2.8.0"
   },
