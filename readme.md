@@ -18,11 +18,9 @@ API
 
 `db.spatial('ddoc/functionName', [[xmin, ymin], [xmax, ymax]], options, callback);`
 
-`db.spatial('ddoc/functionName', [[xmin, ymin, zmin], [xmax, ymax, zmin]], options, callback);`
+`db.spatial('ddoc/functionName', [[xmin, ymin, zmin], [xmax, ymax, zmax]], options, callback);`
 
-`db.spatial('ddoc/functionName', [xmin, ymin, zmin], [xmax, ymax, zmin], options, callback);`
-
-`db.spatial('ddoc/functionName', [[xmin, ymin, zmin], [xmax, ymax, zmin]], options, callback);`
+`db.spatial('ddoc/functionName', [xmin, ymin, zmin], [xmax, ymax, zmax], options, callback);`
 
 `db.spatial('ddoc/functionName', [xmin, ymin, xmax, ymax], options).then(function (result) {}, function (err) {});`
 
