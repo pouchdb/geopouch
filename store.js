@@ -49,7 +49,7 @@ Store.prototype.batch = function(array, cb) {
         return self.del(item.key, callback);
       }
       return self.put(item.key, item.value, callback);
-  });
+    });
   })).then(function () {
     cb();
   }, cb);

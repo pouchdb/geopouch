@@ -140,9 +140,6 @@ function testit(name, opts) {
         return db.spatial('foo/bar',[ -70.98495,42.24867, -70.98495,42.24867], {stale: true}).then(function (resp) {
           resp.length.should.equal(0);
           done();
-        }).catch(function (e) {
-          console.log(e);
-          done(e);
         });
       }).catch(done);
     });
@@ -209,7 +206,7 @@ function testit(name, opts) {
       }).catch(done);
     });
     it ('should allow updating the query designDoc', function (done) {
-        this.timeout(50000);
+      this.timeout(50000);
       db.put({
         _id: '_design/foo',
         spatial: {
@@ -255,25 +252,72 @@ function testit(name, opts) {
       }).catch(done);
     });
 
-      it ('should work fast', function (done) {
-       db2.spatial('foo/bar',[[ -71.70639038085936,42.353469793490646], [-71.56219482421875, 42.461966608980134]]).then(function (resp) {
-          resp.length.should.equal(9);
-          var nr = resp.map(function(i) {
-            return i.id;
-          });
-          nr.sort();
-          nr.should.deep.equal([
-            'BERLIN',
-            'BOLTON',
-            'BOYLSTON',
-            'CLINTON',
-            'HARVARD',
-            'HUDSON',
-            'LANCASTER',
-            'MARLBOROUGH',
-            'NORTHBOROUGH' ], 'names');
-          done();
-        }).catch(done);
+    it ('should work fast', function (done) {
+      db2.spatial('foo/bar',[[ -71.70639038085936,42.353469793490646], [-71.56219482421875, 42.461966608980134]]).then(function (resp) {
+        resp.length.should.equal(9);
+        var nr = resp.map(function(i) {
+          return i.id;
+        });
+        nr.sort();
+        nr.should.deep.equal([
+          'BERLIN',
+          'BOLTON',
+          'BOYLSTON',
+          'CLINTON',
+          'HARVARD',
+          'HUDSON',
+          'LANCASTER',
+          'MARLBOROUGH',
+          'NORTHBOROUGH' ], 'names');
+        done();
+      }).catch(done);
+    });
+
+    it('should be able to close and then open', function (done) {
+      var db3;
+      db.bulkDocs([{
+        _id : 'eb46c0cc24eabb6427af7eac2b0012ac',
+        geometry : {
+          type : 'Point',
+          coordinates : [13.3971420055456, 52.5296601136334]
+        }
+      }, {
+        _id : 'eb46c0cc24eabb6427af7eac2b001c9f',
+        geometry : {
+          type : 'Point',
+          coordinates : [13.6384082053328, 52.418740058446]
+        }
+      }])
+      .then(()=>{
+        return db.spatial(function(doc){
+          emit(doc.geometry);
+        }, [[13.3971420055456,52.418740058446],[13.6384082053328,52.5296601136334]])
+      })
+      .then(resp=>{
+        resp.length.should.equal(2);
+        return db.close();
+      })
+      .then(()=>{
+        db3 = new Pouch('testy', opts);
+        return db3.allDocs();
+      }).then(resp=>{
+        resp.rows.length.should.equal(2);
+      }).then(()=> {
+        return db3.spatial(function(doc){
+          emit(doc.geometry);
+        }, [[13.3971420055456,52.418740058446],[13.6384082053328,52.5296601136334]])
+      }).then(function (resp) {
+        resp.length.should.equal(2);
+        var nr = resp.map(function(i) {
+          return i.id;
+        });
+        db = db3;
+        done();
+      })
+      .catch((e)=>{
+        db = db3;
+        done(e);
       });
     });
+  });
 }

@@ -52,11 +52,14 @@ function spatial(fun, bbox, opts, cb, /*only needed if people use 2 bboxen-->*/c
       throw err;
     }
   });
-  
+
   function updateIndex(func) {
     return function (viewDB) {
+      //console.log(viewDB);
       viewDB = viewDB.db;
-      if (viewDB._rStore) {
+      if (temporary) {
+        store = new RTree();
+      } else if (viewDB._rStore) {
         store = viewDB._rStore;
       } else {
         store = viewDB._rStore = new RTree(new Store(viewDB));
@@ -76,31 +79,31 @@ function spatial(fun, bbox, opts, cb, /*only needed if people use 2 bboxen-->*/c
         function fixMulti (doc) {
           var type = doc.type;
           switch (type) {
-            case 'MultiPoint':
-               return doc.coordinates.forEach(function (coord) {
-                emit({
-                  type: 'Point',
-                  coordinates: coord
-                });
-               });
-            case 'MultiLineString':
-               return doc.coordinates.forEach(function (coord) {
-                emit({
-                  type: 'LineString',
-                  coordinates: coord
-                });
-               });
-            case 'MultiPolygon':
-               return doc.coordinates.forEach(function (coord) {
-                emit({
-                  type: 'Polygon',
-                  coordinates: coord
-                });
-               });
-            case 'GeometryCollection':
-               return doc.geometries.forEach(fixMulti);
-            default:
-                return emit(doc);
+          case 'MultiPoint':
+            return doc.coordinates.forEach(function (coord) {
+              emit({
+                type: 'Point',
+                coordinates: coord
+              });
+            });
+          case 'MultiLineString':
+            return doc.coordinates.forEach(function (coord) {
+              emit({
+                type: 'LineString',
+                coordinates: coord
+              });
+            });
+          case 'MultiPolygon':
+            return doc.coordinates.forEach(function (coord) {
+              emit({
+                type: 'Polygon',
+                coordinates: coord
+              });
+            });
+          case 'GeometryCollection':
+            return doc.geometries.forEach(fixMulti);
+          default:
+            return emit(doc);
           }
         }
         func(doc, fixMulti);
@@ -134,6 +137,9 @@ function spatial(fun, bbox, opts, cb, /*only needed if people use 2 bboxen-->*/c
           return addDoc(doc.doc);
         })).then(function () {
           lastSeq.last_seq = res.last_seq;
+          if (temporary) {
+            return;
+          }
           return upsert(viewDB, '_local/gclastSeq', function (doc) {
             if (!doc.last_seq) {
               return lastSeq;
@@ -177,12 +183,12 @@ function spatial(fun, bbox, opts, cb, /*only needed if people use 2 bboxen-->*/c
 function makeFunc (db, fun) {
   return new Promise (function (resolve, reject) {
     if (typeof fun === 'function') {
-      return resolve(new Function ('doc', 'emit', 'var func = (' + fun.toString().replace(/;\s*$/,"") + ');func(doc);'));
+      return resolve(new Function ('doc', 'emit', 'var func = (' + fun.toString().replace(/;\s*$/,'') + ');func(doc);'));
     }
     var parts = fun.split('/');
     resolve(db.get('_design/' + parts[0]).then(function (doc) {
       var fun = doc.spatial[parts[1]];
-      return new Function ('doc', 'emit', 'var func = (' + fun.replace(/;\s*$/,"") + ');func(doc);');
+      return new Function ('doc', 'emit', 'var func = (' + fun.replace(/;\s*$/,'') + ');func(doc);');
     }));
   });
 }

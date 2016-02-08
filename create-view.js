@@ -5,14 +5,23 @@ var createHash = require('create-hash');
 var Promise = require('lie');
 
 function hash(string) {
-    return createHash('sha224').update(string).digest('hex');
+  return createHash('sha224').update(string).digest('hex');
 }
 
 
 module.exports = function (sourceDB, viewCode, temporary, viewName) {
-
-  var viewSignature = (temporary ? 'temp' : hash(viewCode.toString()));
-  if (!temporary && sourceDB._cachedViews) {
+  if (temporary) {
+    return Promise.resolve({
+      db: {
+        temp: true,
+        get: function () {
+          return Promise.resolve({_id: '_local/gclastSeq', last_seq: 0});
+        }
+      }
+    });
+  }
+  var viewSignature = hash(viewCode.toString());
+  if (sourceDB._cachedViews) {
     var cachedView = sourceDB._cachedViews[viewSignature];
     if (cachedView) {
       return Promise.resolve(cachedView);
@@ -28,7 +37,7 @@ module.exports = function (sourceDB, viewCode, temporary, viewName) {
     function diffFunction(doc) {
       doc.views = doc.views || {};
       var fullViewName = viewSignature;
-      
+
       var depDbs = doc.views[fullViewName] = doc.views[fullViewName] || {};
       /* istanbul ignore if */
       if (depDbs[depDbName]) {
@@ -49,7 +58,7 @@ module.exports = function (sourceDB, viewCode, temporary, viewName) {
         db.auto_compaction = true;
         var view = {
           name: depDbName,
-          db: db, 
+          db: db,
           sourceDB: sourceDB,
           adapter: sourceDB.adapter
         };
@@ -61,31 +70,31 @@ module.exports = function (sourceDB, viewCode, temporary, viewName) {
         }).then(function (lastSeqDoc) {
           view.seq = lastSeqDoc ? lastSeqDoc.seq : 0;
           var viewID;
-          if (!temporary) {
-            sourceDB._cachedViews = sourceDB._cachedViews || {};
-            sourceDB._cachedViews[viewSignature] = view;
-            view.db.on('destroyed', function () {
-              delete sourceDB._cachedViews[viewSignature];
-              upsert(sourceDB, '_local/gcviews', cleanUpView);
-            });
-            viewID = '_design/' + viewName.split('/')[0];
-            sourceDB._viewListeners = sourceDB._viewListeners || {};
-            if (!sourceDB._viewListeners[viewID]) {
-              sourceDB.info().then(function (info) {
-                sourceDB._viewListeners[viewID] = sourceDB.changes({live: true, since: info.update_seq});
-                sourceDB._viewListeners[viewID].on('change', function (ch) {
-                  if (ch.id !== viewID) {
-                    return;
-                  }
-                  view.db.destroy();
-                  sourceDB._viewListeners[viewID].cancel();
-                  delete sourceDB._viewListeners[viewID];
-                  delete sourceDB._cachedViews[viewSignature];
-                  upsert(sourceDB, '_local/gcviews', cleanUpView);
-                });
+
+          sourceDB._cachedViews = sourceDB._cachedViews || {};
+          sourceDB._cachedViews[viewSignature] = view;
+          view.db.on('destroyed', function () {
+            delete sourceDB._cachedViews[viewSignature];
+            upsert(sourceDB, '_local/gcviews', cleanUpView);
+          });
+          viewID = '_design/' + viewName.split('/')[0];
+          sourceDB._viewListeners = sourceDB._viewListeners || {};
+          if (!sourceDB._viewListeners[viewID]) {
+            sourceDB.info().then(function (info) {
+              sourceDB._viewListeners[viewID] = sourceDB.changes({live: true, since: info.update_seq});
+              sourceDB._viewListeners[viewID].on('change', function (ch) {
+                if (ch.id !== viewID) {
+                  return;
+                }
+                view.db.destroy();
+                sourceDB._viewListeners[viewID].cancel();
+                delete sourceDB._viewListeners[viewID];
+                delete sourceDB._cachedViews[viewSignature];
+                upsert(sourceDB, '_local/gcviews', cleanUpView);
               });
-            }
+            });
           }
+
           return view;
         });
       });
