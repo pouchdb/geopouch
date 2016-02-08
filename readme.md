@@ -3,7 +3,7 @@ Spatial Pouch [![Build Status](https://travis-ci.org/pouchdb/geopouch.svg?branch
 
 Spatial plugin from PouchDB extracted and supporting N dimensional coordinates.
 
-Originally by [@vmx](https://github.com/) with contribution by [@daleharvey](https://github.com/) and [@calvinmetcalf](https://github.com/).
+Originally by [@vmx](https://github.com/vmx) with contribution by [@daleharvey](https://github.com/daleharvey) and [@calvinmetcalf](https://github.com/calvinmetcalf).
 
 Test with `npm test` coverage report with `npm test --coverage`, build with `npm run build`.
 
@@ -18,11 +18,9 @@ API
 
 `db.spatial('ddoc/functionName', [[xmin, ymin], [xmax, ymax]], options, callback);`
 
-`db.spatial('ddoc/functionName', [[xmin, ymin, zmin], [xmax, ymax, zmin]], options, callback);`
+`db.spatial('ddoc/functionName', [[xmin, ymin, zmin], [xmax, ymax, zmax]], options, callback);`
 
-`db.spatial('ddoc/functionName', [xmin, ymin, zmin], [xmax, ymax, zmin], options, callback);`
-
-`db.spatial('ddoc/functionName', [[xmin, ymin, zmin], [xmax, ymax, zmin]], options, callback);`
+`db.spatial('ddoc/functionName', [xmin, ymin, zmin], [xmax, ymax, zmax], options, callback);`
 
 `db.spatial('ddoc/functionName', [xmin, ymin, xmax, ymax], options).then(function (result) {}, function (err) {});`
 
