@@ -288,21 +288,21 @@ function testit(name, opts) {
           coordinates : [13.6384082053328, 52.418740058446]
         }
       }])
-      .then(()=>{
+      .then(function (){
         return db.spatial(function(doc){
           emit(doc.geometry);
         }, [[13.3971420055456,52.418740058446],[13.6384082053328,52.5296601136334]])
       })
-      .then(resp=>{
+      .then(function(resp){
         resp.length.should.equal(2);
         return db.close();
       })
-      .then(()=>{
+      .then(function (){
         db3 = new Pouch('testy', opts);
         return db3.allDocs();
-      }).then(resp=>{
+      }).then(function(resp){
         resp.rows.length.should.equal(2);
-      }).then(()=> {
+      }).then(function (){
         return db3.spatial(function(doc){
           emit(doc.geometry);
         }, [[13.3971420055456,52.418740058446],[13.6384082053328,52.5296601136334]])
@@ -314,7 +314,7 @@ function testit(name, opts) {
         db = db3;
         done();
       })
-      .catch((e)=>{
+      .catch(function (e){
         db = db3;
         done(e);
       });
