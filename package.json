@@ -35,6 +35,6 @@
     "istanbul": "^0.3.5",
     "memdown": "^1.0.0",
     "mocha": "^2.0.1",
-    "pouchdb": "^5.0.0"
+    "pouchdb": "^6.0.0"
   }
 }

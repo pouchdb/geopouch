@@ -14,9 +14,7 @@ function testit(name, opts) {
     var db, db2;
     beforeEach(function (done) {
       db = new Pouch('testy', opts);
-      db.then(function () {
-        done();
-      }, done);
+      done();
     });
     before(function (done) {
       db2 = new Pouch('testy2', opts);
@@ -112,16 +110,25 @@ function testit(name, opts) {
           });
         });
       }).then(function () {
-        return db.spatial('foo/bar',[  -70.9610366821289,42.266638876842244, -70.94078063964844,42.293056273848215]).then(function (resp) {
-          resp.length.should.equal(2);
-          var nr = resp.map(function(i) {
-            return i.id;
-          });
-          nr.sort();
-          nr.should.deep.equal(['HULL', 'QUINCY'], 'quincy and hull');
-          done();
+        return db.spatial('foo/bar',[  -70.9610366821289,42.266638876842244, -70.94078063964844,42.293056273848215]);
+      }).then(function (resp) {
+        resp.length.should.equal(2);
+        var nr = resp.map(function(i) {
+          return i.id;
         });
-      }).catch(done);
+        nr.sort();
+        nr.should.deep.equal(['HULL', 'QUINCY'], 'quincy and hull');
+        return db.spatial('foo/bar',[  -70.9610366821289,42.266638876842244, -70.94078063964844,42.293056273848215]);
+      }).then(function(resp) {
+        resp.length.should.equal(2);
+        var nr = resp.map(function(i) {
+          return i.id;
+        });
+        nr.sort();
+        nr.should.deep.equal(['HULL', 'QUINCY'], 'quincy and hull part deux');
+      }).then(function () {
+        done();
+      }, done);
     });
     it ('should work with doc and stale true', function (done) {
       db.put({
