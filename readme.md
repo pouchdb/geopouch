@@ -1,6 +1,8 @@
 Spatial Pouch [![Build Status](https://travis-ci.org/pouchdb/geopouch.svg?branch=rtree)](https://travis-ci.org/pouchdb/geopouch)
 ====
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/pouchdb/geopouch.svg)](https://greenkeeper.io/)
+
 Spatial plugin from PouchDB extracted and supporting N dimensional coordinates.
 
 Originally by [@vmx](https://github.com/vmx) with contribution by [@daleharvey](https://github.com/daleharvey) and [@calvinmetcalf](https://github.com/calvinmetcalf).
