@@ -27,7 +27,7 @@
     "async-rtree": "^1.2.1",
     "create-hash": "^1.0.2",
     "geojson-bounding-volume": "^0.2.2",
-    "lie": "^3.1.0"
+    "lie": "^3.3.0"
   },
   "devDependencies": {
     "browserify": "^14.1.0",
